@@ -82,6 +82,70 @@ p2+p1+plot_layout(widths = c(1,7),guides = 'collect')
 ggsave(filename = "vOTU_composition_sankey.pdf",width = 8,height = 7)
 
 ##########################################################################
+# procruste plot
+bins_table <- read.table("GERD_intestinal_flora__abundance.txt",header = T,sep = "\t",row.names = 1)
+votu_table <- read.table("all_votu_rpkm.txt",header = T,sep = "\t",row.names = 1)
+metadata <- readxl::read_xlsx("grouping_info.xlsx",sheet=1)
+group <- metadata %>% separate(col = "group",into = c("Treat","Time"),sep = "_",remove = F)
+
+spe.dist <- vegdist(t(bins_table)) # Bray-Curtis
+env.dist <- vegdist(scale(t(votu_table),center = F,scale = colSums(t(votu_table))))
+
+# Dimensionality reduction analysis
+# NMDS
+mds.s <- monoMDS(spe.dist)
+mds.e <- monoMDS(env.dist)
+
+# symmetric pattern
+pro.s.e <- procrustes(mds.s,mds.e, symmetric = TRUE)
+summary(pro.s.e)
+
+
+# statistic test
+pro.s.e_t <- protest(mds.s,mds.e, permutations = 999)
+pro.s.e_t
+#pro.s.e_t$ss
+
+# p value
+pro.s.e_t$signif
+
+
+library(ggplot2)
+# get the coordination
+Pro_Y <- cbind(data.frame(pro.s.e$Yrot), data.frame(pro.s.e$X)) %>%
+  as.data.frame() %>%
+  rownames_to_column(var = "sample") %>%
+  left_join(group,by="sample")
+Pro_X <- data.frame(pro.s.e$rotation)
+
+# 绘图
+ggplot(data=Pro_Y,) +
+  geom_segment(aes(x = X1, y = X2, color = group,
+                   xend = (X1 + MDS1)/2, yend = (X2 + MDS2)/2),
+  ) +
+  geom_segment(aes(x = (X1 + MDS1)/2, y = (X2 + MDS2)/2,
+                   xend = MDS1, yend = MDS2,color = group)
+  ) +
+  geom_point(aes(X1, X2,color = group),shape=16,position="jitter") +
+  geom_point(aes(MDS1, MDS2, color = group),shape=17,position="jitter") +
+  theme(panel.grid = element_blank(),
+        panel.background = element_rect(color = 'black',
+                                        fill = 'transparent'),
+        legend.key = element_rect(fill = 'transparent'),
+        axis.ticks.length = unit(0.4,"lines"),
+        axis.ticks = element_line(color='black'),
+        axis.line = element_line(colour = "black"),
+        axis.title.x=element_text(colour='black', size=14),
+        axis.title.y=element_text(colour='black', size=14),
+        axis.text=element_text(colour='black',size=12)) +
+  labs(x = 'MDS1', y = 'MDS2', color = '') +
+  labs(title="Correlation between microbial community and metabolites") +
+  theme(plot.title = element_text(size=8,colour = "black",
+                                  hjust = 0.5,face = "bold"))
+
+ggsave(filename = "procruste_plot2.pdf",width = 6,height = 5)
+
+##########################################################################
 # Abundance stack diagram
 #RPKM2Abundance
 library(rstatix)
