@@ -118,7 +118,6 @@ Pro_Y <- cbind(data.frame(pro.s.e$Yrot), data.frame(pro.s.e$X)) %>%
   left_join(group,by="sample")
 Pro_X <- data.frame(pro.s.e$rotation)
 
-# 绘图
 ggplot(data=Pro_Y,) +
   geom_segment(aes(x = X1, y = X2, color = group,
                    xend = (X1 + MDS1)/2, yend = (X2 + MDS2)/2),
