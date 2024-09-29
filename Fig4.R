@@ -148,19 +148,6 @@ mp <- read.table("MelonnPan_Predicted_Metabolites.txt",header = T,sep = "\t",row
 meta <- readxl::read_xlsx("grouping_info.xlsx")
 meta <- meta %>% separate(col = group,into = c("Treat","Time"),sep = "_",remove = F)
 
-# BiocManager::install('mixOmics')
-library(mixOmics)
-
-samples_0w <- rownames(group[which(group$period=="0w"),])
-samples_4w <- rownames(group[which(group$period=="4w"),])
-samples_8w <- rownames(group[which(group$period=="8w"),])
-samples_12w <- rownames(group[which(group$period=="12w"),])
-
-group_0w <- group[samples_0w,]
-group_4w <- group[samples_4w,]
-group_8w <- group[samples_8w,]
-group_12w <- group[samples_12w,]
-
 library(vegan)
 bray = vegdist(mp,method = "bray")
 bray <- as.matrix(bray)
